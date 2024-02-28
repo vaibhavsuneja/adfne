@@ -1,9 +1,0 @@
-{
-	"name": "nnvaibann",
-	"location": "eastus",
-	"identity": {
-		"type": "SystemAssigned",
-		"principalId": "593b73de-1eb0-4f1b-823f-9ef43af736db",
-		"tenantId": "02b0aa2c-8c09-4ab8-b805-deb9f96dc574"
-	}
-}

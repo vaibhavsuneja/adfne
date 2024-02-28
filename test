@@ -1,0 +1,118 @@
+{
+    "name": "Pipeline_LD_TIME_ATTENDANCE",
+    "properties": {
+        "activities": [
+            {
+                "name": "CopyDataFromSourceToTarget",
+                "type": "Copy",
+                "inputs": [
+                    {
+                        "referenceName": "SourceDataset",
+                        "type": "DatasetReference"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "TargetDataset",
+                        "type": "DatasetReference"
+                    }
+                ],
+                "typeProperties": {
+                    "source": {
+                        "type": "DelimitedTextSource",
+                        "storeSettings": {
+                            "type": "AzureBlobFSReadSettings"
+                        }
+                    },
+                    "sink": {
+                        "type": "SqlSink",
+                        "writeBatchSize": 2000,
+                        "writeBatchTimeout": "00:05:00"
+                    },
+                    "enableStaging": false
+                }
+            }
+        ],
+        "parameters": {
+            "Common_DB_Parameters_DB_NAME": {
+                "type": "string",
+                "defaultValue": "PlanitDB"
+            },
+            "Common_DB_Parameters_DB_USER": {
+                "type": "string",
+                "defaultValue": "PlanitUser"
+            },
+            "Common_DB_Parameters_DB_PASSWORD": {
+                "type": "string",
+                "defaultValue": "PlanitPassword"
+            },
+            "Planit_Common_Parameters_TRANSFORM_DATASET_PATH": {
+                "type": "string",
+                "defaultValue": "\\\\server\\path\\to\\dataset"
+            },
+            "INVOCATION_ID": {
+                "type": "string"
+            }
+        },
+        "annotations": []
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}
+
+{
+    "name": "AzureSqlDatabaseLinkedService",
+    "properties": {
+        "type": "AzureSqlDatabase",
+        "typeProperties": {
+            "connectionString": {
+                "type": "SecureString",
+                "value": "[concat('Server=tcp:', pipeline().parameters.Common_DB_Parameters_DB_NAME, '.database.windows.net,1433;Database=', pipeline().parameters.Common_DB_Parameters_DB_NAME, ';User ID=', pipeline().parameters.Common_DB_Parameters_DB_USER, ';Password=', pipeline().parameters.Common_DB_Parameters_DB_PASSWORD, ';Trusted_Connection=False;Encrypt=True;Connection Timeout=30;')]"
+            }
+        }
+    },
+    "type": "Microsoft.DataFactory/factories/linkedservices"
+}
+
+{
+    "name": "SourceDataset",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "AzureBlobStorageLinkedService",
+            "type": "LinkedServiceReference"
+        },
+        "type": "DelimitedText",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobFSLocation",
+                "fileName": {
+                    "value": "[concat('TF_TIME_ATTENDANCE_', pipeline().parameters.INVOCATION_ID, '.ds')]",
+                    "type": "Expression"
+                },
+                "folderPath": {
+                    "value": "[pipeline().parameters.Planit_Common_Parameters_TRANSFORM_DATASET_PATH]",
+                    "type": "Expression"
+                }
+            },
+            "columnDelimiter": ",",
+            "escapeChar": "\\",
+            "firstRowAsHeader": true,
+            "quoteChar": "\""
+        }
+    },
+    "type": "Microsoft.DataFactory/factories/datasets"
+}
+
+{
+    "name": "TargetDataset",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "AzureSqlDatabaseLinkedService",
+            "type": "LinkedServiceReference"
+        },
+        "type": "AzureSqlTable",
+        "typeProperties": {
+            "tableName": "TBL_TM_IN_OUT_FRM_KRONOS"
+        }
+    },
+    "type": "Microsoft.DataFactory/factories/datasets"
+}
